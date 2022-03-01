@@ -96,8 +96,13 @@ with open("co2-ppm-daily.csv") as CO2:
         CO2_year, CO2_month, CO2_day = row[0].split("-")
         anomaly_dict[CO2_year, CO2_month, CO2_day] = float(row[1]) - overall_avg
 
-with open("Coding_Challenge_3.3_anomaly_values.csv", "w") as csvfile:
-    writer = csv.writer(csvfile)
-    for date, value in anomaly_dict.items():
-        writer.writerow([date, value])
-    csvfile.close()
+print(anomaly_dict)
+
+## Also worked on outputting to a new csv, but I'd like to learn how to recombine the dates to original format; for some
+## the output .csv skips every other row; otherwise it more or less worked
+#
+# with open("Coding_Challenge_3.3_anomaly_values.csv", "w") as csvfile:
+#     writer = csv.writer(csvfile)
+#     for date, value in anomaly_dict.items():
+#         writer.writerow([date, value])
+#     csvfile.close()
