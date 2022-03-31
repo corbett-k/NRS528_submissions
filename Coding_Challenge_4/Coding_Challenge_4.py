@@ -6,16 +6,17 @@
 # The first step will be to access the .csv metadata file and convert its contents to a point feature class...
 # To accomplish this, I will use the 'XY Table To Point' tool within arcpy:
 
-import arcpy
+import arcpy, os
 
 # Set environment settings:
-arcpy.env.workspace = r"G:\My Drive\Coursework\Spring 2022 Courses\NRS 528\Coding Challenges\Challenge 4\GIS_datafiles"
+directory = r"C:\Data\Students_2022\Corbett\Coding_Challenge_4"
+arcpy.env.workspace = directory
 
 # From the ArcGIS Pro online help documentation for the 'XY Table to Point Tool':
 # arcpy.management.XYTableToPoint(in_table, out_feature_class, x_field, y_field, {z_field}, {coordinate_system})
 
 # Setting the local variables:
-in_table = r"drone_imagery_metadata.csv"
+in_table = os.path.join(directory, r"drone_imagery_metadata.csv")
 out_feature_class = "image_center_points"
 x_coords = "GPSLongitude"
 y_coords = "GPSLatitude"

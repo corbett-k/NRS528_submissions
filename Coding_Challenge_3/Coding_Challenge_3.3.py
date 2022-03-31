@@ -100,9 +100,9 @@ print(anomaly_dict)
 
 ## Also worked on outputting to a new csv, but I'd like to learn how to recombine the dates to original format; for some
 ## the output .csv skips every other row; otherwise it more or less worked
-#
-# with open("Coding_Challenge_3.3_anomaly_values.csv", "w") as csvfile:
-#     writer = csv.writer(csvfile)
-#     for date, value in anomaly_dict.items():
-#         writer.writerow([date, value])
-#     csvfile.close()
+
+with open("Coding_Challenge_3.3_anomaly_values.csv", "w", newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    for date, value in anomaly_dict.items():
+        writer.writerow([date, value])
+    csvfile.close()
