@@ -5,6 +5,28 @@
 ## K. Corbett
 
 
+### Midterm Tool Challenge - NRS 528 ###
+
+## Giving a go at producing a script that performs several of the early steps my M.S. project
+## modelbuilder tool accomplishes. I'm going to bring in the metadata .csv file containing the
+## information pertinent to steps needed for georeferencing images. The .csv will be read in and
+## converted to a point feature class (based on lat/longs in the metadata file), which is then projected.
+## it to a UTM coordinate system so meters will be used as a unit of measurement. This is necessary
+## for following steps, which add fields to the point feature class layer and populates them with
+## calculated values needed to ultimately compute each image's Ground Sampling Distance,
+## or GSD, which are:
+##           altitude of the UAS when the image was captured
+##           and some camera parameters: sensor width, focal length, image width and height in pixels
+## Sensor width and focal length are provided mm, making a coordinate system in meters beneficial
+## when making calculations.
+
+## We will basically be attempting to transpose a photo captured by a drone in the air, that also happened to
+## store some other useful info in that photo's digital data we can use to roughly estimate the "real world"
+## footprint captured by that image, then place it there for visualization and analysis.
+
+## I'll start by bringing in the metadata .csv file and converting it to point feature class
+
+
 import arcpy
 
 ## I was just messing around trying to make a thing work here... basically allow the user to set the workspace
