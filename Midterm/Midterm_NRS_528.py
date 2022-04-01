@@ -8,11 +8,10 @@
 ## Giving my best go at script duplicating first third of custom modelbuilder tool built to georeference drone imagery,
 ## as part of data processing needs for MSc thesis research.
 
-## The model first brings in the .csv file containing pertinent metadata for steps to georeference the input images.
-## The .csv gets converted to a point feature class (based on lat/longs in the metadata file).
-## which is then projected into a UTM coordinate system (units of meters is helpful for next steps, in which other metric
-## measurements are used in calculations). Altitude gets recorded in meters to the metadata, and the camera's sensor width
-## and focal length are provided in millimeters.
+## The first step brings in the .csv file containing pertinent metadata for steps to georeference the input images.
+## Then the .csv gets converted to a point feature class (based on lat/longs in the metadata file), which gets projected
+## into a UTM coordinate system (metric units helpful for next steps involving calculations with altitude (in meters),
+## and camera sensor width and focal length (both in millimeters).
 
 import arcpy
 
@@ -34,7 +33,7 @@ spRef = arcpy.SpatialReference(4326)  # (4326 = GCS_WGS_1984)
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(26919)
 
     ### *** not sure why, but for some reason, in this next step below, when the .csv table gets converted to
-    ### to a point feature class, the column headings end up truncated to a 10-character limit in the output...
+    ###     to a point feature class, the column headings end up truncated to a 10-character limit in the output...
 
 # Creating XY event layer:
 arcpy.management.XYTableToPoint(in_table, out_feature_class, x_coords, y_coords, z_coords, spRef)
