@@ -35,7 +35,7 @@ with open("co2-ppm-daily.csv") as CO2:
 
 print("The maximum CO2 value from the list is " + str(max(CO2_values)))
 print("\nThe minimum CO2 value from the list is " + str(min(CO2_values)))
-print("\nThe average of all CO2 values from the list is " + str(float(sum(CO2_values) / int(line_counter))))
+print("\nThe average of all CO2 values from the list is " + str(round((float(sum(CO2_values) / int(line_counter))), 2)))
 
 # Calculating Annual Averages:
 
@@ -78,31 +78,34 @@ with open("co2-ppm-daily.csv") as CO2:
         if CO2_month == '12' or CO2_month == '01' or CO2_month == '02':
             winter_list.append(float(row[1]))
 
-print("\nThe average CO2 value throughout Spring months in this dataset = " + str(sum(spring_list) / len(spring_list)))
-print("\nThe average CO2 value throughout Summer months in this dataset = " + str(sum(summer_list) / len(summer_list)))
-print("\nThe average CO2 value throughout Autumn months in this dataset = " + str(sum(autumn_list) / len(autumn_list)))
-print("\nThe average CO2 value throughout Winter months in this dataset = " + str(sum(winter_list) / len(winter_list)))
+print("\nThe average CO2 value throughout Spring months in this dataset = " + str(round((float(sum(spring_list) / len(spring_list))), 3)))
+print("\nThe average CO2 value throughout Summer months in this dataset = " + str(round((float(sum(summer_list) / len(summer_list))), 3)))
+print("\nThe average CO2 value throughout Autumn months in this dataset = " + str(round((float(sum(autumn_list) / len(autumn_list))), 3)))
+print("\nThe average CO2 value throughout Winter months in this dataset = " + str(round((float(sum(winter_list) / len(winter_list))), 3)))
 
-# Calculating Anomalies:
+print("\n")
 
-overall_avg = sum(CO2_values) / len(CO2_values)
-anomaly_dict = {}
-
-with open("co2-ppm-daily.csv") as CO2:
-    csv_reader = csv.reader(CO2, delimiter=',')
-    header_skip = next(CO2)
-
-    for row in csv_reader:
-        CO2_year, CO2_month, CO2_day = row[0].split("-")
-        anomaly_dict[CO2_year, CO2_month, CO2_day] = float(row[1]) - overall_avg
-
-print(anomaly_dict)
-
-## Also worked on outputting to a new csv, but I'd like to learn how to recombine the dates to original format; for some
-## the output .csv skips every other row; otherwise it more or less worked
-
-with open("Coding_Challenge_3.3_anomaly_values.csv", "w", newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    for date, value in anomaly_dict.items():
-        writer.writerow([date, value])
-    csvfile.close()
+# # Calculating Anomalies:
+#
+# overall_avg = sum(CO2_values) / len(CO2_values)
+# anomaly_dict = {}
+#
+# with open("co2-ppm-daily.csv") as CO2:
+#     csv_reader = csv.reader(CO2, delimiter=',')
+#     header_skip = next(CO2)
+#
+#     for row in csv_reader:
+#         CO2_year, CO2_month, CO2_day = row[0].split("-")
+#         anomaly_dict[CO2_year, CO2_month, CO2_day] = float(row[1]) - overall_avg
+#
+# print("Anomaly for each value in the dataset:\n")
+# print(anomaly_dict)
+#
+# ## Also worked on outputting to a new csv, but I'd like to learn how to recombine the dates to original format; for some
+# ## the output .csv skips every other row; otherwise it more or less worked
+#
+# with open("Coding_Challenge_3.3_anomaly_values.csv", "w", newline='') as csvfile:
+#     writer = csv.writer(csvfile)
+#     for date, value in anomaly_dict.items():
+#         writer.writerow([date, value])
+#     csvfile.close()
