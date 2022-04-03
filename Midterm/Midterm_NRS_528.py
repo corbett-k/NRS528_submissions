@@ -22,7 +22,7 @@ arcpy.env.workspace = workspace
 # arcpy.management.XYTableToPoint(in_table, out_feature_class, x_field, y_field, {z_field}, {coordinate_system})
 
 # Setting variables for tool:
-in_table = "metadata"
+in_table = "drone_imagery_metadata"
 out_feature_class = "image_cntr_coords"
 x_coords = "Longitude"
 y_coords = "Latitude"
