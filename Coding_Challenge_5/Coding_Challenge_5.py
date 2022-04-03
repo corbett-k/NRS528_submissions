@@ -6,50 +6,59 @@ import arcpy, csv
 arcpy.env.workspace = r"C:\Users\Kristopher\Documents\NRS528_submissions_REPO\Coding_Challenge_5"
 
 
-# first determine what species are contained in the CSV
+# first determine what species are contained in the .csv file
+species_list = []
 
-species = []
-filename = "species_combined_dataset.csv"
-
-with open(filename) as spp_csv:
+with open(r"species_combined_dataset.csv") as spp_csv:
     next(spp_csv)  # skips first line (column headings)
 
     for row in csv.reader(spp_csv):
-        if row[0] not in species:
-            species.append(row[0])
+        if row[0] not in species_list:
+            species_list.append(row[0])
 
     print("\nYour dataset contains the following list of species:")
-    print(species)
+    print(species_list)
 
-    # Next, create a shapefile for all species, then perform a selection for every species and output a layer
-    # for each individual species
+# create a layer encompassing the entire .csv dataset
+in_Table = "species_combined_dataset.csv"
+x_coords = "longitude"
+y_coords = "latitude"
+z_coords = ""
+out_Layer = "all_species.shp"
+spRef = arcpy.SpatialReference(4326)  # including the spatial reference (4326 == WGS 1984)
 
-for s in species:
+arcpy.MakeXYEventLayer_management(in_Table, x_coords, y_coords, out_Layer, spRef, z_coords)
 
-    # first create a layer encompassing the entire .csv dataset
-    in_Table = spp_csv
-    x_coords = "longitude"
-    y_coords = "latitude"
-    z_coords = ""
-    out_Layer = "all_species"
-    spRef = arcpy.SpatialReference(4326)  # including the spatial reference (4326 == WGS 1984)
+if arcpy.Exists(out_Layer):
+    print("\nA layer containing all species data exists...")
+#
+# total number of rows
+row_ttl = arcpy.GetCount_management(out_Layer)
+print("This dataset contains " + str(row_ttl) + " rows.\n")
 
-    arcpy.MakeXYEventLayer_management(in_Table, x_coords, y_coords, out_Layer, spRef, z_coords)
+copy_layer = "copy_layer.shp"
+arcpy.CopyFeatures_management(out_Layer, copy_layer)
 
-    # list the total number of rows for the all_species layer
-    row_ttl = arcpy.GetCount_management(out_Layer)
-    print("\nThe dataset contains " + str(row_ttl) + " rows of data.")
+# verify all_species shapefile created
+if arcpy.Exists(copy_layer):
+    print("A shapefile containing all species data has been generated...\n")
+
+# loop through all species and generate relevant files (shapefile, fishnet) to generate a heatmap
+
+for sp in species_list:
 
     # select individual species with the all_species layer
-    sp_selection = arcpy.SelectLayerByAttribute_management(out_Layer, "NEW_SELECTION", "species = " + s)
+    # arcpy.management.SelectLayerByAttribute(in_layer_or_view, {selection_type}, {where_clause}, {invert_where_clause})
+
+    sp_selection = arcpy.SelectLayerByAttribute_management(copy_layer, "NEW_SELECTION", "species = '" + sp + "'")
 
     # create a unique shapefile layer for each species
-    sp_layer = "sp_lyr_" + s
+    sp_layer = "sp_lyr_" + sp + ".shp"
     arcpy.CopyFeatures_management(sp_selection, sp_layer)
 
     # determine that shapefile has been created
     if arcpy.Exists(sp_layer):
-        print("A shapefile for " + s + " has been created ...\n")
+        print("Shapefile generated for species: '" + sp + "'")
 
     # describe the extent of each species shapefile
     desc = arcpy.Describe(sp_layer)
@@ -58,11 +67,11 @@ for s in species:
     YMin = desc.extent.YMin
     YMax = desc.extent.YMax
 
-    print("The spatial extent for the distribution of species: " + s)
-    print("XMin: " + str(XMin) + "\nXMax: " + str(XMax) + "\nYMin: " + str(YMin) + "\nYMax: " + str(YMax))
+    print("Spatial extent of '" + sp + "' shapefile:\nXMin: " + str(XMin) + "\nXMax: " + str(XMax) + "\nYMin: "
+          + str(YMin) + "\nYMax: " + str(YMax))
 
-    # Create a fishnet for the shapefile
-    outFeatureClass = "sp_fishnet" + s + ".shp"
+    # create a fishnet for the shapefile
+    outFeatureClass = "sp_fishnet_" + sp + ".shp"
     originCoordinate = str(XMin) + " " + str(YMin)
     yAxisCoordinate = str(XMin) + " " + str(YMin + 1.0)
     cellSizeWidth = "2"
@@ -78,10 +87,13 @@ for s in species:
                                    cellSizeWidth, cellSizeHeight, numRows, numColumns,
                                    oppositeCorner, labels, templateExtent, geometryType)
 
+    if arcpy.Exists(outFeatureClass):
+        print("Fishnet generated based on '" + sp + "' shapefile's extent...")
+
     # perform spatial join of shapefile and fishnet to create heatmap
     target_features = outFeatureClass
     join_features = sp_layer
-    out_feature_class = "heatmap_" + s + ".shp"
+    out_feature_class = "heatmap_" + sp + ".shp"
     join_operation = "JOIN_ONE_TO_ONE"
     join_type = "KEEP_ALL"
     field_mapping = ""
@@ -95,11 +107,16 @@ for s in species:
 
     # ensure heatmap has been created
     if arcpy.Exists(out_feature_class):
-        print("\nHeatmap for " + s + " successfully generated.")
+        print("Heatmap for '" + sp + "' successfully generated.\n")
 
-# inform that all heatmaps have been created successfully
-print("\nAll species heatmap shapefiles are ready. These can now be open and viewed in ArcGIS Pro.\n "
-      "Be sure to change Symbology to 'Graduated Colors' and adjust # of classes accordingly.")
+    # clean up intermediate files
+    arcpy.Delete_management(sp_layer)
+    arcpy.Delete_management(outFeatureClass)
 
-# delete intermediary files
+arcpy.Delete_management(copy_layer)
+print("All intermediate files deleted.")
 
+print("\n--------------------------------------------\n")
+# confirm all heatmaps have been created successfully
+print("All species heatmaps have been successfully generated.\nThese can now be opened and viewed in ArcGIS.\n"
+      "(tip: change Symbology to 'Graduated Colors' and adjust # of classes accordingly.")
