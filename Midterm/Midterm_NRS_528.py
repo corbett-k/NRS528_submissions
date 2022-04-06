@@ -15,14 +15,14 @@
 
 import arcpy
 
-workspace = r"C:\Users\Kristopher\Documents\NRS528_submissions_REPO\Midterm\midterm_data"
+workspace = r"C:\Data\Students_2022\Corbett\Midterm\midterm_data"
 arcpy.env.workspace = workspace
 
 # 'XY Table to Point Tool' converts the .csv metadata file to a point feature class
 # arcpy.management.XYTableToPoint(in_table, out_feature_class, x_field, y_field, {z_field}, {coordinate_system})
 
 # Setting variables for tool:
-in_table = "drone_imagery_metadata"
+in_table = "drone_imagery_metadata.csv"
 out_feature_class = "image_cntr_coords"
 x_coords = "Longitude"
 y_coords = "Latitude"
