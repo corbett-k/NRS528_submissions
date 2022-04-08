@@ -50,7 +50,7 @@ species_file_list = glob.glob("*.csv")
 count = 1
 
 for sp_file in species_file_list:
-    print("\nConverting " + Fore.BLACK + Back.WHITE + (sp_file) + Style.RESET_ALL + " from table to shapefile format...")
+    print("\nConverting " + Fore.BLACK + Back.WHITE + sp_file + Style.RESET_ALL + " from table to shapefile format...")
 
     in_Table = sp_file
     x_coords = "longitude"
