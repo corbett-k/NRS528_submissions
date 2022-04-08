@@ -10,8 +10,8 @@ input_directory = r"C:\Users\Kristopher\Documents\NRS-528_submissions_Repo\Codin
 
 if not os.path.exists(os.path.join(input_directory, "output_files")):
     os.mkdir(os.path.join(input_directory, "output_files"))
-# if not os.path.exists(os.path.join(input_directory, "temporary_files")):
-#     os.mkdir(os.path.join(input_directory, "temporary_files"))
+if not os.path.exists(os.path.join(input_directory, "temporary_files")):
+    os.mkdir(os.path.join(input_directory, "temporary_files"))
 
 arcpy.env.workspace = os.path.join(input_directory, "output_files")
 
