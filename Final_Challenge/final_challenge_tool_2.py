@@ -1,93 +1,101 @@
+#### NRS-528 #######################
+#### Semester Final Coding Challenge
+############################ Tool #2
 
 import arcpy
 import os
 # from colorama import Fore
 
-### DEFINING THE WORKSPACE
+### DEFINE WORKSPACE
 work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
 arcpy.env.workspace = work_dir
 
-### ALLOW OVERWRITING OF OUTPUTS
+### ALLOW OVERWRITING OF ARCGIS PRO OUTPUTS
 arcpy.env.overwriteOutput = True
 
-### CREATING A FILE GEODATABASE, INTO WHICH JPEG IMAGES WILL BE ADDED (IN ESRI GRID FORMAT)
-fileGDB = os.path.join(work_dir, 'rotated_rasters.gdb')
-if not os.path.exists(fileGDB):
+### CREATE FILE GEODATABASE, INTO WHICH JPEG IMAGES WILL BE ADDED (AS ESRI GRID FORMAT; ** parameterize later)
+fileGDB = os.path.join(work_dir, 'DGtool_Outputs.gdb')
+if os.path.exists(fileGDB):
+    print("\n'DGtool_Outputs.gdb' exists in workspace directory (rotated rasters and mosaic dataset output location) ...")
+else:
+    arcpy.CreateFileGDB_management(out_folder_path=work_dir, out_name='DGtool_Outputs.gdb')
     # arcpy.management.CreateFileGDB(out_folder_path, out_name, {out_version})
-    arcpy.CreateFileGDB_management(out_folder_path=work_dir, out_name='rotated_rasters.gdb')
+    print("\nNew geodatabase 'DGtool_Outputs.gdb' created in current workspace directory ...")
 
-### CREATING AN EMPTY MOSAIC DATASET, INTO WHICH FINAL PRODUCT RASTERS WILL BE LATER ADDED
-# arcpy.management.CreateMosaicDataset(in_workspace, in_mosaicdataset_name, coordinate_system, {num_bands},
-# {pixel_type}, {product_definition}, {product_band_definitions})
-spRef_1 = arcpy.SpatialReference(26919)  # UTM coordinate system (26919 == NAD 1983 Zone 19N)
-mosaic_ds = arcpy.CreateMosaicDataset_management(in_workspace=fileGDB, in_mosaicdataset_name='mosaic_dataset',
-                                                 coordinate_system=spRef_1, num_bands=3, pixel_type='8_BIT_UNSIGNED',
-                                                 product_definition='NATURAL_COLOR_RGB')
-### DEFINING DIRECTORY PATHS
+### DEFINE DIRECTORY PATH TO IMAGES
 images_dir = os.path.join(work_dir, r'input_data\test_images')
-output_dir = os.path.join(work_dir, 'output_files')
 
-### DEFINING VARIABLES FOR SEARCH CURSOR OPERATIONS
-input_shp = os.path.join(output_dir, 'image_coords_xy.shp')
+### DEFINE DIRECTORY PATH TO SHAPEFILE AND ATTRIBUTE TABLE FIELDS TO BE USED
+input_shp = os.path.join(work_dir, r'output_files\image_coords_xy.shp')
 fields = ['FileName', 'GSD_m', 'ULX', 'ULY', 'GimbalYaw']
 
-count = 0
+### DEFINE SPATIAL REFERENCE FOR GEOPROCESSING TASKS
+spRef = arcpy.SpatialReference(26919)  # 26919 = NAD 1983 Zone 19N; UTMs required for WF format correspondence
 
-### SEARCH CURSOR USED TO LOOP THROUGH LIST OF IMAGES IN SHAPEFILE ATTRIBUTE TABLE;
-### WORLD FILE GENERATED FOR GEOREFERENCING; IMAGES ROTATED AND MERGED TO MOSAIC DATASET
+def Rotate(inRaster, outRaster, angle):
+    arcpy.Rotate_management(inRaster, outRaster, angle)
+    return outRaster
+
+### PROCESSING METADATA: WORLD FILE GEOREFERENCING AND RASTER ROTATION
+### LOOP THROUGH ROWS OF SHAPEFILE ATTRIBUTE TABLE USING SEARCH CURSOR
 with arcpy.da.SearchCursor(input_shp, fields) as cursor:
+
     for row in cursor:
 
-        ### DEFINING FIELD VARIABLES BY ROW INPUT
-        jpg_filename = row[0]
+        jpg_file = str(row[0])
         GSD = row[1]
-        worldFile_X = row[2]
-        worldFile_Y = row[3]
-        rotation = row[4]
+        WorldFile_X = row[2]
+        WorldFile_Y = row[3]
+        raster_rotation = row[4]
 
-        ### DEFINING THE NAMING PROPERTIES AND OUTPUT LOCATION OF TEXT FILES
-        txt_file = os.path.join(images_dir, jpg_filename.replace('.JPG', '.txt'))
+        ### DEFINE TEXT/WORLD FILE NAME AND OUTPUT LOCATION
+        txt_file = os.path.join(images_dir, jpg_file.replace('JPG', 'txt'))
+        world_file = os.path.join(images_dir, jpg_file.replace('JPG', 'jgw'))
 
-        ### CREATING TEXT FILES TO BE CONVERTED AND USED AS WORLD FILE GEOREFERENCING INSTRUCTIONS
-        with open(txt_file, 'w') as new_txt_file:
-            new_txt_file.write(str(GSD) + '\n0\n0\n' + '-' + str(GSD) + '\n' + str(worldFile_X) + '\n' + str(worldFile_Y))
+        ### CREATE TEXT FILE ...
+        if not os.path.exists(txt_file) and not os.path.exists(world_file):
+            write_txt_file = open(txt_file, 'w')
+            write_txt_file.write(str(GSD) +
+                                 '\n0\n0' +
+                                 '\n-' + str(GSD) +
+                                 '\n' + str(WorldFile_X) +
+                                 '\n' + str(WorldFile_Y))
+            write_txt_file.close()
 
-        ### ALTERING TEXT FILE EXTENSION TO .JGW (THIS ALTERATION DEFINES IT AS A WORLD FILE, RECOGNIZED BY ARCGIS)
-        filename_no_ext = os.path.join(images_dir, jpg_filename.replace('.JPG', ''))
-        os.rename(txt_file, filename_no_ext + '.jgw')
+            ### ... AND CONVERT TO WORLD FILE (.txt TO .jgw for JPEG rasters; ** parameterize later)
+            os.rename(txt_file, txt_file.replace('txt', 'jgw'))
 
-        # ### MOVING IMAGES INTO A FILE GEODATABASE PRIOR TO ROTATION AND MERGING INTO MOSAIC DATASET
-        # # arcpy.conversion.RasterToGeodatabase(Input_Rasters, Output_Geodatabase, {Configuration_Keyword})
-        # image_in = os.path.join(images_dir, jpg_filename)
-        # arcpy.RasterToGeodatabase_conversion(Input_Rasters=image_in, Output_Geodatabase=fileGDB)
+        if os.path.exists(txt_file):
+            if not os.path.exists(world_file):
+                os.rename(txt_file, txt_file.replace('txt', 'jgw'))
 
-        ### DEFINING NEW NAME FOR ROTATED RASTER AND RESOLVING ESRI GRID STACK FORMAT CHARACTER LIMIT
-        pre_rotate_raster = os.path.join(images_dir, jpg_filename)
-        count = count + 1
-        image = "image_" + str(count)
-        GDB_rotate_raster = os.path.join(fileGDB, image)
+        ### COPY RASTER TO GDB
+        ### i.e., move world file georeferenced jpeg images to geodatabase (as esri grid format)
+        jpg_path = os.path.join(images_dir, jpg_file)
+        GDB_raster = jpg_file.replace('.JPG', '')
+        GDB_raster_path = os.path.join(fileGDB, GDB_raster)
 
-        ### ROTATING RASTERS
-        # arcpy.management.Rotate(in_raster, out_raster, angle, {pivot_point}, {resampling_type}, {clipping_extent})
-        arcpy.Rotate_management(in_raster=pre_rotate_raster, out_raster=GDB_rotate_raster, angle=rotation)
+        with arcpy.EnvManager(outputCoordinateSystem=spRef):
+            arcpy.CopyRaster_management(in_raster=jpg_path, out_rasterdataset=GDB_raster_path,
+                                        nodata_value="256", format="JPEG", transform="Transform")
+        # arcpy.management.CopyRaster(in_raster, out_rasterdataset, {config_keyword}, {background_value},
+        # {nodata_value}, {onebit_to_eightbit}, {colormap_to_RGB}, {pixel_type}, {scale_pixel_value},
+        # {RGB_to_Colormap}, {format}, {transform}, {process_as_multidimensional}, {build_multidimensional_transpose})
 
-        ### ADDING RASTERS TO MOSAIC DATASET
-        # arcpy.management.AddRastersToMosaicDataset(in_mosaic_dataset, raster_type, input_path, {update_cellsize_ranges},
-        # {update_boundary}, {update_overviews}, {maximum_pyramid_levels}, {maximum_cell_size}, {minimum_dimension},
-        # {spatial_reference}, {filter}, {sub_folder}, {duplicate_items_action}, {build_pyramids}, {calculate_statistics},
-        # {build_thumbnails}, {operation_description}, {force_spatial_reference}, {estimate_statistics}, {aux_inputs},
-        # {enable_pixel_cache}, {cache_location})
-        spRef_2 = arcpy.SpatialReference(4326)  # (4326 == WGS 1984)
-        arcpy.AddRastersToMosaicDataset_management(in_mosaic_dataset=mosaic_ds, raster_type="UAV/UAS",
-                                                   input_path=GDB_rotate_raster, spatial_reference=spRef_2)
+        if arcpy.Exists(GDB_raster_path):
+            print("Image " + jpg_file + " moved to geodatabase...")
 
-# arcpy.management.SetMosaicDatasetProperties(in_mosaic_dataset, {rows_maximum_imagesize}, {columns_maximum_imagesize},
-# {allowed_compressions}, {default_compression_type}, {JPEG_quality}, {LERC_Tolerance}, {resampling_type},
-# {clip_to_footprints}, {footprints_may_contain_nodata}, {clip_to_boundary}, {color_correction},
-# {allowed_mensuration_capabilities}, {default_mensuration_capabilities}, {allowed_mosaic_methods},
-# {default_mosaic_method}, {order_field}, {order_base}, {sorting_order}, {mosaic_operator}, {blend_width},
-# {view_point_x}, {view_point_y}, {max_num_per_mosaic}, {cell_size_tolerance}, {cell_size}, {metadata_level},
-# {transmission_fields}, {use_time}, {start_time_field}, {end_time_field}, {time_format}, {geographic_transform},
-# {max_num_of_download_items}, {max_num_of_records_returned}, {data_source_type}, {minimum_pixel_contribution},
-# {processing_templates}, {default_processing_template}, {time_interval}, {time_interval_units}, {product_definition},
-# {product_band_definitions})
+        # ### ROTATE RASTER
+        # rotated_GDB_raster = GDB_raster + '_r'
+        # arcpy.Rotate_management(in_raster=GDB_raster, out_raster=rotated_GDB_raster, angle=raster_rotation)
+        # # arcpy.management.Rotate(in_raster, out_raster, angle, {pivot_point}, {resampling_type}, {clipping_extent})
+
+        rotated_GDB_raster = GDB_raster + '_r'
+        rotated_GDB_raster_path = os.path.join(fileGDB, rotated_GDB_raster)
+
+        Rotate(GDB_raster_path, GDB_raster_path + '_r', raster_rotation)
+
+        if arcpy.Exists(GDB_raster_path):
+            print("Raster " + GDB_raster + " rotated...\n")
+
+print("All rasters georeferenced. Run Tool #3 for mosaicking process ...")
