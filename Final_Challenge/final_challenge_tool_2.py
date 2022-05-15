@@ -58,7 +58,7 @@ with arcpy.da.SearchCursor(input_shp, fields) as cursor:
 
         ### DEFINING NEW NAME FOR ROTATED RASTERS
         GDB_raster = os.path.join(fileGDB, filename_no_ext)
-        rotated_raster = os.path.join(mosaic_ds, filename_no_ext + '_r')
+        rotated_raster = filename_no_ext + '_r'
 
         ### ROTATING RASTERS
         # arcpy.management.Rotate(in_raster, out_raster, angle, {pivot_point}, {resampling_type}, {clipping_extent})
