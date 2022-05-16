@@ -7,8 +7,7 @@ import os
 from colorama import Fore
 
 ### DEFINE WORKSPACE
-work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
-arcpy.env.workspace = work_dir
+arcpy.env.workspace = work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
 
 ### ALLOW OVERWRITING OF ARCGIS PRO OUTPUTS
 arcpy.env.overwriteOutput = True
@@ -86,7 +85,7 @@ with arcpy.da.SearchCursor(input_shp, fields) as cursor:
         #                             {process_as_multidimensional}, {build_multidimensional_transpose})
 
         if arcpy.Exists(GDB_raster_path):
-            print(Fore.GREEN + "Image " + Fore.RESET + jpg_file + Fore.GREEN + " moved to geodatabase..." + Fore.RESET)
+            print(Fore.GREEN + "Image " + Fore.RESET + jpg_file + Fore.GREEN + " copied to geodatabase ..." + Fore.RESET)
 
         # ### ROTATE RASTER
         rotated_GDB_raster_name = GDB_raster_name + '_r'
@@ -95,9 +94,9 @@ with arcpy.da.SearchCursor(input_shp, fields) as cursor:
         Rotate(GDB_raster_path, rotated_GDB_raster_path, raster_rotation)
 
         if arcpy.Exists(rotated_GDB_raster_path):
-            print(Fore.GREEN + "Raster " + Fore.RESET + GDB_raster_name + Fore.GREEN + " rotated and output as " +
+            print(Fore.GREEN + "Raster " + Fore.RESET + GDB_raster_name + Fore.GREEN + " rotated, output as " +
                   Fore.RESET + rotated_GDB_raster_name + Fore.GREEN + " ...\n" + Fore.RESET)
 
             arcpy.Delete_management(GDB_raster_path)
 
-print(Fore.CYAN + "All rasters georeferenced. Run Tool #3 for mosaicking process ..." + Fore.RESET)
+print(Fore.CYAN + "All rasters georeferenced and ready for mosaicking in Tool #3." + Fore.RESET)

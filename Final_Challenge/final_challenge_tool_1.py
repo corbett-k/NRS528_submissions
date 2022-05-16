@@ -6,92 +6,103 @@ import arcpy
 import os
 from colorama import Fore
 
-work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
-arcpy.env.workspace = work_dir
+### DEFINE WORKSPACE
+arcpy.env.workspace = work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
 
+### ALLOW OVERWRITING OF ARCGIS PRO OUTPUTS
+arcpy.env.overwriteOutput = True
+
+### DEFINE DIRECTORY PATHS TO INPUTS
 input_dir = os.path.join(work_dir, 'input_data')
 images_dir = os.path.join(input_dir, 'test_images')
 input_csv = os.path.join(input_dir, 'image_metadata.csv')
 
-fields_list = [f.name for f in arcpy.ListFields(input_csv)]
-row_count = arcpy.GetCount_management(input_csv)
-
-print("\n"+ str(len(fields_list)) + Fore.BLUE + " categories of metadata extracted:\n    "+ Fore.RESET +
-      str((sorted(fields_list))).replace("[", "").replace("]", "").replace("'", "").lower() + Fore.BLUE +
-      "\n\nNumber of rows / images represented in metadata : " + Fore.RESET + str(row_count))
-
-# 'XY Table to Point Tool' converts the .csv metadata file to a point feature class
-# arcpy.management.XYTableToPoint(in_table, out_feature_class, x_field, y_field, {z_field}, {coordinate_system})
-
-in_table = input_csv
-out_feature_class = "image_coords.shp"
-x_coords = "Longitude"
-y_coords = "Latitude"
-z_coords = ""
-spRef = arcpy.SpatialReference(4326)  # (4326 = GCS_WGS_1984)
-
-# Projecting to UTM coordinate system (26919 = NAD 1983 Zone 19N)
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(26919)
-
+### CREATE FOLDER FOR OUTPUTS
 output_dir = os.path.join(work_dir, 'output_files')
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 
-arcpy.env.workspace = output_dir
+### DETERMINE CATEGORIES OF METADATA AVAILABLE IN .CSV TABLE FILE
+fields_list = [f.name for f in arcpy.ListFields(input_csv)]
+row_count = arcpy.GetCount_management(input_csv)
 
-# Creating XY event layer:
-layer = arcpy.XYTableToPoint_management(in_table, out_feature_class, x_coords, y_coords, z_coords, spRef)
+### PROVIDE USER WITH LIST OF METADATA CATEGORIES AND NUMBER OR IMAGES REPRESENTED IN TABLE ROWS
+print("\n" + Fore.GREEN + "Categories (columns) of metadata extracted: " + Fore.RESET +  str(len(fields_list)) +
+      "\n" + str((sorted(fields_list))).replace("[", "").replace("]", "").replace("'", "").lower() + Fore.GREEN +
+      "\n\nNumber of images (rows) represented in metadata: " + Fore.RESET + str(row_count))
 
-pt_shp = "image_coords_xy.shp"
-arcpy.Copy_management(layer, pt_shp)
+### CONVERT .CSV TABLE FILE TO POINT FEATURE CLASS USING XY TABLE TO POINT GEOPROCESSING TOOL
 
+in_table = input_csv
+out_feature_class = os.path.join(output_dir, "image_coords.shp")
+x_coords = "Longitude"
+y_coords = "Latitude"
+z_coords = ""
+spRef = arcpy.SpatialReference(4326)  # (4326 = GCS_WGS_1984)
+PrjCS = arcpy.SpatialReference(26919)  # (26919 = NAD 1983 Zone 19N)
+
+with arcpy.EnvManager(outputCoordinateSystem=PrjCS):  # output to projected coordinate system
+    arcpy.XYTableToPoint_management(in_table, out_feature_class, x_coords, y_coords, z_coords, spRef)
+    # arcpy.management.XYTableToPoint(in_table, out_feature_class, x_field, y_field, {z_field}, {coordinate_system})
+
+### STORE COPY TO OUTPUT DIRECTORY
+pt_shp = os.path.join(output_dir, "image_coords_xy.shp")
+arcpy.Copy_management(out_feature_class, pt_shp)
+
+### PRINT STATEMENT CONFIRMING SUCCESSFUL CONVERSION OF METADATA .CSV TABLE FILE TO SHAPEFILE (POINT FEATURE CLASS)
 if arcpy.Exists(pt_shp):
-    print("\n" + Fore.GREEN + ".csv table file converted to shapefile 'image_coord_xy.shp'" + Fore.RESET)
+    print("\n" + Fore.GREEN + ".csv table file converted to shapefile: " + Fore.RESET + "image_coord_xy.shp")
+    arcpy.Delete_management(out_feature_class)
 
-# Adding XY columns to the feature class attribute table:
+### ADD XY (EASTING/NORTHING) COLUMNS TO FEATURE CLASS ATTRIBUTE TABLE:
 arcpy.AddXY_management(pt_shp)
 
-#  Adding five new fields to the new point feature class, including:
-#  1) column for calculating each images ground sampling distance (in meters): GSD_m
-#  2) column for calculating distances from image's center pixel X value to center left edge pixel: XSHIFT_m
-#  3) column for calculating distances from image's center pixel Y values to center upper edge pixel: YSHIFT_m
-#  4) two columns, 'ULX' and 'ULY' calculate the new XY coordinates for the upper left pixel of the image,
-#     the format needed for georeferencing instructions in a World File
+### ADD 5 NEW FIELDS TO POINT FEATURE CLASS ATTRIBUTE TABLE:
+#   1) column to calculate each images ground sampling distance (in meters): GSD_m
+#   2) column to calculate distances from image's center pixel X value to center left edge pixel: XSHIFT_m
+#   3) column to calculate distances from image's center pixel Y values to center upper edge pixel: YSHIFT_m
+#   4) column to calculate upper left corner pixel coordinate: ULX
+#   5) column to calculate upper left corner pixel coordinate: ULY
 
 added_fields = arcpy.AddFields_management(pt_shp, [["GSD_m", "DOUBLE", "", "", "", ""],
                                                    ["XSHIFT_m", "DOUBLE", "", "", "", ""],
                                                    ["YSHIFT_m", "DOUBLE", "", "", "", ""],
                                                    ["ULX", "DOUBLE", "", "", "", ""],
                                                    ["ULY", "DOUBLE", "", "", "", ""]])
+if arcpy.Exists(added_fields):
+    print(Fore.GREEN + "\nNew fields added to shapefile attribute table ..." + Fore.RESET)
 
-# Populating the GSD_m column with calculated ground sampling distances; with user able to specify values for altitude
-# and camera specs (sensor width, focal length, image width)
-
+### FIELD CALCULATIONS USING CALCULATE FIELD(S)
 # arcpy.management.CalculateField(in_table, field, expression, {expression_type}, {code_block}, {field_type})
+# arcpy.management.CalculateFields(in_table, expression_type, fields, {code_block}, {enforce_domains})
+
+### POPULATE 'GSD_m' COLUMN WITH CALCULATED GROUND SAMPLING DISTANCE VALUES
 
 sensor_width = '6.5625'
 focal_length = '4.5'
 image_width = '4056'
 image_height = '3040'
 
-calculate_GSD = arcpy.CalculateField_management(in_table=added_fields, field="GSD_m",
-                                               expression="((" + sensor_width + "*!Altitude!*100)/(" + focal_length +
-                                                          "*" + image_width + "))/100", expression_type="PYTHON3",
-                                               code_block="", field_type="DOUBLE")
+calculate_GSD = arcpy.CalculateField_management(in_table=added_fields, field="GSD_m", expression="((" + sensor_width +
+                                                "*!Altitude!*100)/(" + focal_length + "*" + image_width + "))/100",
+                                                expression_type="PYTHON3", field_type="DOUBLE")
 if arcpy.Exists(calculate_GSD):
-    print(Fore.GREEN + "\nShapefile's attribute table populated with ground sampling distance values..." + Fore.RESET)
+    print(Fore.GREEN + "Attribute table populated with ground sampling distance values ..." + Fore.RESET)
 
-# Calculating XY shifts (in meters) needed to transfer coordinates from center to upper left pixel (World File format)
+### CALCULATE XY SHIFTS TO MOVE COORDINATES FROM CENTER TO UPPER LEFT PIXEL (WORLD FILE FORMAT)
 XYshifts = arcpy.CalculateFields_management(in_table=calculate_GSD, expression_type="PYTHON3",
-                                                     fields=[["XSHIFT_m", str(int(image_width)/2) + "*!GSD_m!"],
-                                                             ["YSHIFT_m", str(int(image_height)/2) + "*!GSD_m!"]],
-                                                     code_block="")
-if arcpy.Exists(XYshifts):
-    print(Fore.GREEN + "\nX and Y shift values generated..." + Fore.RESET)
+                                            fields=[["XSHIFT_m", str(int(image_width)/2) + "*!GSD_m!"],
+                                                    ["YSHIFT_m", str(int(image_height)/2) + "*!GSD_m!"]])
 
-# Calculating new upper left pixel coordinates using XY shift values
+if arcpy.Exists(XYshifts):
+    print(Fore.GREEN + "Attribute table populated with X and Y shift values ..." + Fore.RESET)
+
+# CALCULATE NEW UPPER LEFT PIXEL COORDINATES USING XY SHIFT VALUES
 newXYcoords = arcpy.CalculateFields_management(in_table=XYshifts, expression_type="PYTHON3",
-                                               fields=[["ULX", "!POINT_X! - !XSHIFT_m!"], ["ULY", "!POINT_Y! + !YSHIFT_m!"]],
-                                               code_block="")
+                                               fields=[["ULX", "!POINT_X! - !XSHIFT_m!"],
+                                                       ["ULY", "!POINT_Y! + !YSHIFT_m!"]])
 if arcpy.Exists(newXYcoords):
-    print(Fore.GREEN + "\nNew X and Y coordinates generated..." + Fore.RESET)
+    print(Fore.GREEN + "Attribute table populated with new XY coordinates ..." + Fore.RESET)
+
+print(Fore.CYAN + "\nShapefile " + Fore.RESET + "image_coords_xy.shp" + Fore.CYAN + " attribute table successfully "
+      "populated with all values needed for georeferencing images in Tool #2." + Fore.RESET)
