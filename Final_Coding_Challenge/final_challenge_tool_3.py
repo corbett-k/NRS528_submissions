@@ -2,11 +2,15 @@
 #### Semester Final Coding Challenge
 ############################ Tool #3
 
+import os
+import sys
 import arcpy
 from colorama import Fore
 
 ### DEFINE GEODATABASE WORKSPACE CONTAINING RASTERS
-arcpy.env.workspace = fileGDB = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge\DGtool_Outputs.gdb'
+arcpy.env.workspace = work_dir = sys.argv[1]
+
+fileGDB = os.path.join(work_dir, 'DGtool_Outputs.gdb')
 
 ### ALLOW OVERWRITING OF ARCGIS PRO OUTPUTS
 arcpy.env.overwriteOutput = True

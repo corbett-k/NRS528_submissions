@@ -2,12 +2,13 @@
 #### Semester Final Coding Challenge
 ############################ Tool #1
 
-import arcpy
 import os
+import sys
+import arcpy
 from colorama import Fore
 
 ### DEFINE WORKSPACE
-arcpy.env.workspace = work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
+arcpy.env.workspace = work_dir = sys.argv[1]
 
 ### ALLOW OVERWRITING OF ARCGIS PRO OUTPUTS
 arcpy.env.overwriteOutput = True
@@ -37,12 +38,13 @@ in_table = input_csv
 out_feature_class = os.path.join(output_dir, "image_coords.shp")
 x_coords = "Longitude"
 y_coords = "Latitude"
-z_coords = ""
+
 spRef = arcpy.SpatialReference(4326)  # (4326 = GCS_WGS_1984)
 PrjCS = arcpy.SpatialReference(26919)  # (26919 = NAD 1983 Zone 19N)
 
 with arcpy.EnvManager(outputCoordinateSystem=PrjCS):  # output to projected coordinate system
-    arcpy.XYTableToPoint_management(in_table, out_feature_class, x_coords, y_coords, z_coords, spRef)
+    arcpy.XYTableToPoint_management(in_table=in_table, out_feature_class=out_feature_class,
+                                    x_coords=x_coords, y_coords=y_coords, spRef=spRef)
     # arcpy.management.XYTableToPoint(in_table, out_feature_class, x_field, y_field, {z_field}, {coordinate_system})
 
 ### STORE COPY TO OUTPUT DIRECTORY

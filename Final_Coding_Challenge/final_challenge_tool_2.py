@@ -2,25 +2,30 @@
 #### Semester Final Coding Challenge
 ############################ Tool #2
 
-import arcpy
 import os
+import sys
+import arcpy
 from colorama import Fore
 
 ### DEFINE WORKSPACE
-arcpy.env.workspace = work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
+arcpy.env.workspace = work_dir = sys.argv[1]
 
 ### ALLOW OVERWRITING OF ARCGIS PRO OUTPUTS
 arcpy.env.overwriteOutput = True
 
 ### CREATE FILE GEODATABASE, INTO WHICH JPEG IMAGES WILL BE ADDED (AS ESRI GRID FORMAT; ** parameterize later)
 fileGDB = os.path.join(work_dir, 'DGtool_Outputs.gdb')
+
+print(Fore.GREEN + "Creating geodatabase " + Fore.RESET + "DGtool_Outputs.gdb" +
+      Fore.GREEN + " for processing outputs ..." + Fore.RESET)
+
 if os.path.exists(fileGDB):
     print("\nDGtool_Outputs.gdb" + Fore.GREEN + " already exists in workspace directory ...\n" + Fore.RESET)
 else:
     arcpy.CreateFileGDB_management(out_folder_path=work_dir, out_name='DGtool_Outputs.gdb')
     # arcpy.management.CreateFileGDB(out_folder_path, out_name, {out_version})
     print(Fore.GREEN + "\nNew geodatabase " + Fore.RESET + "DGtool_Outputs.gdb" + Fore.GREEN +
-          " created in current workspace directory ..." + Fore.RESET)
+          " created in current workspace directory ..." + Fore.RESET + "\n")
 
 ### DEFINE DIRECTORY PATH TO IMAGES
 images_dir = os.path.join(work_dir, r'input_data\test_images')
@@ -79,10 +84,9 @@ with arcpy.da.SearchCursor(input_shp, fields) as cursor:
         with arcpy.EnvManager(outputCoordinateSystem=spRef):
             arcpy.CopyRaster_management(in_raster=jpg_path, out_rasterdataset=GDB_raster_path,
                                         nodata_value="256", format="JPEG", transform="Transform")
-        # arcpy.management.CopyRaster(in_raster, out_rasterdataset, {config_keyword}, {background_value},
-        #                             {nodata_value}, {onebit_to_eightbit}, {colormap_to_RGB}, {pixel_type},
-        #                             {scale_pixel_value}, {RGB_to_Colormap}, {format}, {transform},
-        #                             {process_as_multidimensional}, {build_multidimensional_transpose})
+        # arcpy.management.CopyRaster(in_raster, out_rasterdataset, {config_keyword}, {background_value}, {nodata_value},
+        #       {onebit_to_eightbit}, {colormap_to_RGB}, {pixel_type}, {scale_pixel_value}, {RGB_to_Colormap}, {format},
+        #       {transform}, {process_as_multidimensional}, {build_multidimensional_transpose})
 
         if arcpy.Exists(GDB_raster_path):
             print(Fore.GREEN + "Image " + Fore.RESET + jpg_file + Fore.GREEN + " copied to geodatabase ..." + Fore.RESET)
@@ -95,8 +99,11 @@ with arcpy.da.SearchCursor(input_shp, fields) as cursor:
 
         if arcpy.Exists(rotated_GDB_raster_path):
             print(Fore.GREEN + "Raster " + Fore.RESET + GDB_raster_name + Fore.GREEN + " rotated, output as " +
-                  Fore.RESET + rotated_GDB_raster_name + Fore.GREEN + " ...\n" + Fore.RESET)
+                  Fore.RESET + rotated_GDB_raster_name + Fore.GREEN + " ..." + Fore.RESET)
 
             arcpy.Delete_management(GDB_raster_path)
 
-print(Fore.CYAN + "All rasters georeferenced and ready for mosaicking in Tool #3." + Fore.RESET)
+        if not arcpy.Exists(GDB_raster_path):
+            print(Fore.GREEN + "Intermediate unrotated raster removed from geodatabase ...\n" + Fore.RESET)
+
+print(Fore.CYAN + "Tool processing complete. Georeferenced rasters now ready for mosaicking in Tool #3." + Fore.RESET)
