@@ -4,7 +4,7 @@
 
 import arcpy
 import os
-# from colorama import Fore
+from colorama import Fore
 
 ### DEFINE WORKSPACE
 work_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Final_Challenge'
@@ -16,11 +16,12 @@ arcpy.env.overwriteOutput = True
 ### CREATE FILE GEODATABASE, INTO WHICH JPEG IMAGES WILL BE ADDED (AS ESRI GRID FORMAT; ** parameterize later)
 fileGDB = os.path.join(work_dir, 'DGtool_Outputs.gdb')
 if os.path.exists(fileGDB):
-    print("\n'DGtool_Outputs.gdb' exists in workspace directory (rotated rasters and mosaic dataset output location) ...")
+    print("\nDGtool_Outputs.gdb" + Fore.GREEN + " already exists in workspace directory ...\n" + Fore.RESET)
 else:
     arcpy.CreateFileGDB_management(out_folder_path=work_dir, out_name='DGtool_Outputs.gdb')
     # arcpy.management.CreateFileGDB(out_folder_path, out_name, {out_version})
-    print("\nNew geodatabase 'DGtool_Outputs.gdb' created in current workspace directory ...")
+    print(Fore.GREEN + "\nNew geodatabase " + Fore.RESET + "DGtool_Outputs.gdb" + Fore.GREEN +
+          " created in current workspace directory ..." + Fore.RESET)
 
 ### DEFINE DIRECTORY PATH TO IMAGES
 images_dir = os.path.join(work_dir, r'input_data\test_images')
@@ -33,6 +34,7 @@ fields = ['FileName', 'GSD_m', 'ULX', 'ULY', 'GimbalYaw']
 spRef = arcpy.SpatialReference(26919)  # 26919 = NAD 1983 Zone 19N; UTMs required for WF format correspondence
 
 def Rotate(inRaster, outRaster, angle):
+    # arcpy.management.Rotate(in_raster, out_raster, angle, {pivot_point}, {resampling_type}, {clipping_extent})
     arcpy.Rotate_management(inRaster, outRaster, angle)
     return outRaster
 
@@ -72,30 +74,30 @@ with arcpy.da.SearchCursor(input_shp, fields) as cursor:
         ### COPY RASTER TO GDB
         ### i.e., move world file georeferenced jpeg images to geodatabase (as esri grid format)
         jpg_path = os.path.join(images_dir, jpg_file)
-        GDB_raster = jpg_file.replace('.JPG', '')
-        GDB_raster_path = os.path.join(fileGDB, GDB_raster)
+        GDB_raster_name = jpg_file.replace('.JPG', '')
+        GDB_raster_path = os.path.join(fileGDB, GDB_raster_name)
 
         with arcpy.EnvManager(outputCoordinateSystem=spRef):
             arcpy.CopyRaster_management(in_raster=jpg_path, out_rasterdataset=GDB_raster_path,
                                         nodata_value="256", format="JPEG", transform="Transform")
         # arcpy.management.CopyRaster(in_raster, out_rasterdataset, {config_keyword}, {background_value},
-        # {nodata_value}, {onebit_to_eightbit}, {colormap_to_RGB}, {pixel_type}, {scale_pixel_value},
-        # {RGB_to_Colormap}, {format}, {transform}, {process_as_multidimensional}, {build_multidimensional_transpose})
+        #                             {nodata_value}, {onebit_to_eightbit}, {colormap_to_RGB}, {pixel_type},
+        #                             {scale_pixel_value}, {RGB_to_Colormap}, {format}, {transform},
+        #                             {process_as_multidimensional}, {build_multidimensional_transpose})
 
         if arcpy.Exists(GDB_raster_path):
-            print("Image " + jpg_file + " moved to geodatabase...")
+            print(Fore.GREEN + "Image " + Fore.RESET + jpg_file + Fore.GREEN + " moved to geodatabase..." + Fore.RESET)
 
         # ### ROTATE RASTER
-        # rotated_GDB_raster = GDB_raster + '_r'
-        # arcpy.Rotate_management(in_raster=GDB_raster, out_raster=rotated_GDB_raster, angle=raster_rotation)
-        # # arcpy.management.Rotate(in_raster, out_raster, angle, {pivot_point}, {resampling_type}, {clipping_extent})
+        rotated_GDB_raster_name = GDB_raster_name + '_r'
+        rotated_GDB_raster_path = os.path.join(fileGDB, rotated_GDB_raster_name)
 
-        rotated_GDB_raster = GDB_raster + '_r'
-        rotated_GDB_raster_path = os.path.join(fileGDB, rotated_GDB_raster)
+        Rotate(GDB_raster_path, rotated_GDB_raster_path, raster_rotation)
 
-        Rotate(GDB_raster_path, GDB_raster_path + '_r', raster_rotation)
+        if arcpy.Exists(rotated_GDB_raster_path):
+            print(Fore.GREEN + "Raster " + Fore.RESET + GDB_raster_name + Fore.GREEN + " rotated and output as " +
+                  Fore.RESET + rotated_GDB_raster_name + Fore.GREEN + " ...\n" + Fore.RESET)
 
-        if arcpy.Exists(GDB_raster_path):
-            print("Raster " + GDB_raster + " rotated...\n")
+            arcpy.Delete_management(GDB_raster_path)
 
-print("All rasters georeferenced. Run Tool #3 for mosaicking process ...")
+print(Fore.CYAN + "All rasters georeferenced. Run Tool #3 for mosaicking process ..." + Fore.RESET)
