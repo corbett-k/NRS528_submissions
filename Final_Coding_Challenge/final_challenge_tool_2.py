@@ -14,24 +14,24 @@ arcpy.env.workspace = work_dir = sys.argv[1]
 arcpy.env.overwriteOutput = True
 
 ### CREATE FILE GEODATABASE, INTO WHICH JPEG IMAGES WILL BE ADDED (AS ESRI GRID FORMAT; ** parameterize later)
-fileGDB = os.path.join(work_dir, 'DGtool_Outputs.gdb')
+fileGDB = sys.argv[1]  # os.path.join(work_dir, 'DGtool_Outputs.gdb')
 
-print(Fore.GREEN + "Creating geodatabase " + Fore.RESET + "DGtool_Outputs.gdb" +
-      Fore.GREEN + " for processing outputs ..." + Fore.RESET)
-
-if os.path.exists(fileGDB):
-    print("\nDGtool_Outputs.gdb" + Fore.GREEN + " already exists in workspace directory ...\n" + Fore.RESET)
-else:
-    arcpy.CreateFileGDB_management(out_folder_path=work_dir, out_name='DGtool_Outputs.gdb')
-    # arcpy.management.CreateFileGDB(out_folder_path, out_name, {out_version})
-    print(Fore.GREEN + "\nNew geodatabase " + Fore.RESET + "DGtool_Outputs.gdb" + Fore.GREEN +
-          " created in current workspace directory ..." + Fore.RESET + "\n")
+# print(Fore.GREEN + "Creating geodatabase " + Fore.RESET + "DGtool_Outputs.gdb" +
+#       Fore.GREEN + " for processing outputs ..." + Fore.RESET)
+#
+# if os.path.exists(fileGDB):
+#     print("\nDGtool_Outputs.gdb" + Fore.GREEN + " already exists in workspace directory ...\n" + Fore.RESET)
+# else:
+#     arcpy.CreateFileGDB_management(out_folder_path=work_dir, out_name='DGtool_Outputs.gdb')
+#     # arcpy.management.CreateFileGDB(out_folder_path, out_name, {out_version})
+#     print(Fore.GREEN + "\nNew geodatabase " + Fore.RESET + "DGtool_Outputs.gdb" + Fore.GREEN +
+#           " created in current workspace directory ..." + Fore.RESET + "\n")
 
 ### DEFINE DIRECTORY PATH TO IMAGES
-images_dir = os.path.join(work_dir, r'input_data\test_images')
+images_dir = sys.argv[2]  # os.path.join(work_dir, r'input_data\test_images')
 
 ### DEFINE DIRECTORY PATH TO SHAPEFILE AND ATTRIBUTE TABLE FIELDS TO BE USED
-input_shp = os.path.join(work_dir, r'output_files\image_coords_xy.shp')
+input_shp = sys.argv[3]  # os.path.join(work_dir, r'output_files\image_coords_xy.shp')
 fields = ['FileName', 'GSD_m', 'ULX', 'ULY', 'GimbalYaw']
 
 ### DEFINE SPATIAL REFERENCE FOR GEOPROCESSING TASKS

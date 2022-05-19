@@ -13,7 +13,7 @@ arcpy.env.workspace = work_dir = sys.argv[1]
 fileGDB = os.path.join(work_dir, 'DGtool_Outputs.gdb')
 
 ### ALLOW OVERWRITING OF ARCGIS PRO OUTPUTS
-arcpy.env.overwriteOutput = True
+arcpy.env.overwriteOutput = False
 
 ### DEFINE SPATIAL REFERENCE FOR GEOPROCESSING TASKS
 spRef = arcpy.SpatialReference(26919)  # 26919 = NAD 1983 Zone 19N; UTMs needed for world file format correspondence
