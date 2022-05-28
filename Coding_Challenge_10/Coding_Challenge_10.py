@@ -5,10 +5,10 @@
 
 import os, arcpy
 
-arcpy.env.workspace = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Coding_Challenge_10\Landsat_data_lfs'
-
+arcpy.env.workspace = r'C:\Users\Kristopher\Documents\GitHub\528submissionsRepo\Coding_Challenge_10\Landsat_data_lfs'
+# os.walk (stack overflow article)
 rasterList = arcpy.ListRasters("LC*", "TIF")
-# print(rasterList)
+print(rasterList)
 
 band_4_list = [raster for raster in rasterList if "_B5.tif" not in raster]
 print(band_4_list)
@@ -46,7 +46,7 @@ print("\nNovember Band 4 (Vis-Red) Raster: " + Nov_B4)
 Nov_B5 = band_5_list[5]
 print("    November Band 5 (NIR) Raster: " + Nov_B5)
 
-output_dir = r'C:\Users\krist\Documents\GitHub\NRS528_submissions\Coding_Challenge_10\output_files'
+output_dir = r'C:\Users\Kristopher\Documents\GitHub\528submissionsRepo\Coding_Challenge_10\output_files'
 
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
